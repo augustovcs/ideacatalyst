@@ -78,7 +78,7 @@ public class IdeaInput : IIdeaInput
         return response.Models != null && response.Models.Any();
 
 
-        
+
     }
 
 }
