@@ -50,6 +50,7 @@ builder.Services.AddControllers();
 
 //SERVICES SCOPE
 builder.Services.AddScoped<IIdeaInput, IdeaInput>();
+builder.Services.AddScoped<IGetOutput, GetOutput>();
 
 
 var app = builder.Build();

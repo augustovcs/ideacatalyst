@@ -20,8 +20,8 @@ public class InputTextController : ControllerBase
     public async Task<IActionResult> GetIdeaByStatus()
     {
 
-        var user_credentials = await _ideainput.GetIdeaByStatus("Active");
-        return Ok(user_credentials);
+        var response = await _ideainput.GetIdeaByStatus("Active");
+        return Ok(response);
 
     }
 
@@ -32,7 +32,7 @@ public class InputTextController : ControllerBase
         var answer_response =  await _ideainput.InputTextIdea(idea);
 
          // LOGS
-        Console.WriteLine($"Idea registered: {idea.answer}");
+        //Console.WriteLine($"Idea registered: {idea.answer}");
         return Ok(new
         {
             message = "Idea registered successfully",

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Models;
 using DTOs;
 using Interfaces;
+using Services;
 
 namespace Services;
 
@@ -21,6 +22,9 @@ public class IdeaInput : IIdeaInput
 
     public async Task<List<AnswersDTO>> GetIdeaByStatus(string status)
     {
+
+        return new List<AnswersDTO>();
+        /*
         var taskPost = await _supabaseClient
         .From<AnalysisSession>()
         .Where(t => t.Status == status )
@@ -32,7 +36,7 @@ public class IdeaInput : IIdeaInput
           answer = c.Idea
 
         }).ToList();
-
+        */
 
     }
 
@@ -51,6 +55,9 @@ public class IdeaInput : IIdeaInput
             .From<AnalysisSession>()
             .Insert(newInput);
 
+        var prompt = new TreatPrompt();
+        prompt.GeneratePrompt(input_answer.answer);
+        
 
         return response.Models != null && response.Models.Any();
     }

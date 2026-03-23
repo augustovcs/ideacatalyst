@@ -7,10 +7,13 @@ interface QuestionFlowProps {
   totalQuestions: number;
   questionText: string;
   onSubmit: (answer: string) => void;
+  showProgress?: boolean;
 }
 
-export function QuestionFlow({ questionIndex, totalQuestions, questionText, onSubmit }: QuestionFlowProps) {
+export function QuestionFlow({ questionIndex, totalQuestions, questionText, onSubmit, showProgress }: QuestionFlowProps) {
   const [value, setValue] = useState("");
+
+  
 
   const handleSubmit = () => {
     if (!value.trim()) return;
@@ -23,6 +26,7 @@ export function QuestionFlow({ questionIndex, totalQuestions, questionText, onSu
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] px-6" key={questionIndex}>
       {/* Progress */}
+      {showProgress &&( 
       <div className="w-full max-w-lg mb-12 animate-fade-in">
         <div className="flex justify-between text-sm text-muted-foreground mb-2 font-mono-data">
           <span>Pergunta {questionIndex + 1}/{totalQuestions}</span>
@@ -35,7 +39,9 @@ export function QuestionFlow({ questionIndex, totalQuestions, questionText, onSu
           />
         </div>
       </div>
+      )}
 
+   
       {/* Question */}
       <div className="w-full max-w-lg animate-fade-up">
         <h2 className="text-2xl sm:text-3xl font-semibold mb-8 leading-snug" style={{ lineHeight: "1.2" }}>
@@ -74,5 +80,8 @@ export function QuestionFlow({ questionIndex, totalQuestions, questionText, onSu
         </div>
       </div>
     </div>
+    
   );
 }
+
+

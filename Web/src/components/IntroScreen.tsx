@@ -13,7 +13,6 @@ export function IntroScreen({ onStart }: IntroScreenProps) {
 
   const handleAPI = async () => {
     const data = await returnAPImsg()
-    console.log("RETURNED: ", data)
     setMessage(data[0].answer)
   }
 
@@ -46,9 +45,8 @@ export function IntroScreen({ onStart }: IntroScreenProps) {
         <Button
           size="lg"
           onClick={() => {
-            handleAPI()
             // ativar apos teste de CALL API 
-            // onStart()
+            onStart()
           }}
           className="h-14 px-8 text-base font-semibold rounded-xl glow-primary transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] gap-2"
         >
@@ -63,11 +61,11 @@ export function IntroScreen({ onStart }: IntroScreenProps) {
         className="mt-16 flex items-center gap-6 text-sm text-muted-foreground animate-fade-up"
         style={{ animationDelay: "380ms" }}
       >
-        <span className="flex items-center gap-1.5">⏱ ~3 minutos</span>
+        <span className="flex items-center gap-1.5">⏱ ~6 minutos</span>
         <span className="w-1 h-1 rounded-full bg-muted-foreground/40" />
-        <span className="flex items-center gap-1.5">🔒 Privado</span>
+        <span className="flex items-center gap-1.5">🔒 100% Privado</span>
         <span className="w-1 h-1 rounded-full bg-muted-foreground/40" />
-        <span className="flex items-center gap-1.5">✨ Grátis</span>
+        <span className="flex items-center gap-1.5">✨ Grátis (por enquanto)</span>
       </div>
     </div>
   );

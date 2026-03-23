@@ -75,9 +75,6 @@ export function AnalysisResult({ result, onReset }: AnalysisResultProps) {
         <h1 className="text-3xl sm:text-4xl font-bold mb-2" style={{ lineHeight: "1.1" }}>
           Resultado da Análise
         </h1>
-        <p className="text-muted-foreground text-base max-w-md mx-auto mt-3">
-          &ldquo;{result.ideaTitle}&rdquo;
-        </p>
       </div>
 
       {/* Overall Score */}
