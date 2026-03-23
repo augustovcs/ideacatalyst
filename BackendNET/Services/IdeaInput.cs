@@ -19,6 +19,24 @@ public class IdeaInput : IIdeaInput
         _supabaseClient = supabaseClient;
     }
 
+    public async Task<List<AnswersDTO>> GetIdeaByStatus(string status)
+    {
+        var taskPost = await _supabaseClient
+        .From<AnalysisSession>()
+        .Where(t => t.Status == status )
+        .Get();
+
+        return taskPost.Models.Select(c => new AnswersDTO()
+        {
+          status = c.Status,
+          answer = c.Idea
+
+        }).ToList();
+
+
+    }
+
+
     public async Task<bool> InputTextIdea(AnswersDTO input_answer)
     {
         var newInput = new AnalysisSession

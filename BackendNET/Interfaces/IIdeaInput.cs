@@ -14,6 +14,7 @@ namespace Interfaces;
 public interface IIdeaInput
 {
 
+    Task<List<AnswersDTO>> GetIdeaByStatus(string status);
     Task<bool> InputTextIdea(AnswersDTO input_answer);
 
 }

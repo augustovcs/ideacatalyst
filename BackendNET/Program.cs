@@ -8,14 +8,15 @@ var AllowSpecificOrigins = "innertiaWeb";
 var builder = WebApplication.CreateBuilder(args);
 
 // CORS
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: AllowSpecificOrigins, policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.WithOrigins("http://localhost:3000", "http://localhost:8080")
             .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowAnyMethod();
+            //.AllowCredentials();
     });
 });
 
@@ -61,6 +62,8 @@ await supabaseClient.InitializeAsync();
 var dbTestService = new TestingClasses.DatabaseTestService(supabaseClient);
 await dbTestService.TestInsertAsync();
 
+
+app.UseRouting();
 app.UseCors(AllowSpecificOrigins);
 app.UseAuthentication();
 app.UseAuthorization();
@@ -78,6 +81,6 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.MapStaticAssets();
 await app.RunAsync();

@@ -16,6 +16,15 @@ public class InputTextController : ControllerBase
         _ideainput = ideaInput;
     }
 
+    [HttpGet("ideabystatus")]
+    public async Task<IActionResult> GetIdeaByStatus()
+    {
+
+        var user_credentials = await _ideainput.GetIdeaByStatus("Active");
+        return Ok(user_credentials);
+
+    }
+
 
     [HttpPost("idea")]
     public async Task<IActionResult> InputIdea ([FromBody] AnswersDTO idea)

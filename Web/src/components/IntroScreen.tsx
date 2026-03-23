@@ -1,11 +1,23 @@
 import { Lightbulb, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { returnAPImsg } from "@/services/api";
+import { useState } from "react"
 
 interface IntroScreenProps {
   onStart: () => void;
 }
 
 export function IntroScreen({ onStart }: IntroScreenProps) {
+
+  const [message, setMessage] = useState<string>("")
+
+  const handleAPI = async () => {
+    const data = await returnAPImsg()
+    console.log("RETURNED: ", data)
+    setMessage(data[0].answer)
+  }
+
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] px-6 text-center">
       <div className="animate-fade-up" style={{ animationDelay: "0ms" }}>
@@ -33,12 +45,16 @@ export function IntroScreen({ onStart }: IntroScreenProps) {
       <div className="animate-fade-up" style={{ animationDelay: "260ms" }}>
         <Button
           size="lg"
-          onClick={onStart}
+          onClick={() => {
+            handleAPI()
+          }}
           className="h-14 px-8 text-base font-semibold rounded-xl glow-primary transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] gap-2"
         >
           Começar análise
           <ArrowRight className="w-5 h-5" />
         </Button>
+        <p>{message}</p>
+
       </div>
 
       <div
