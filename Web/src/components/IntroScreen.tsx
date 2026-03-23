@@ -30,16 +30,16 @@ export function IntroScreen({ onStart }: IntroScreenProps) {
         className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.08] mb-5 animate-fade-up"
         style={{ animationDelay: "80ms", lineHeight: "1.08" }}
       >
-        Analise sua
+        Sua ideia é boa?
         <br />
-        <span className="text-primary">próxima ideia</span>
+        <span className="text-primary">vamos descobrir agora!</span>
       </h1>
 
       <p
         className="text-muted-foreground text-lg sm:text-xl max-w-md mb-10 animate-fade-up"
         style={{ animationDelay: "160ms" }}
       >
-        Responda 6 perguntas rápidas e descubra o potencial da sua ideia com uma análise detalhada.
+        Conte sua ideia, responda algumas perguntas e descubra tudo que precisa para tirar ela do papel.
       </p>
 
       <div className="animate-fade-up" style={{ animationDelay: "260ms" }}>
@@ -47,6 +47,8 @@ export function IntroScreen({ onStart }: IntroScreenProps) {
           size="lg"
           onClick={() => {
             handleAPI()
+            // ativar apos teste de CALL API 
+            // onStart()
           }}
           className="h-14 px-8 text-base font-semibold rounded-xl glow-primary transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] gap-2"
         >

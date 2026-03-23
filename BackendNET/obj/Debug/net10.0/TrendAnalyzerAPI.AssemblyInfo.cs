@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TrendAnalyzerAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+759ae668dd2dbf37ee0c2569cf3c4fd0ff761bb2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+22367764832db6a916171fbffd330c8729e5cb7f")]
 [assembly: System.Reflection.AssemblyProductAttribute("TrendAnalyzerAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TrendAnalyzerAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
