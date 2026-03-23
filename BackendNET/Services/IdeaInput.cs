@@ -66,7 +66,7 @@ public class IdeaInput : IIdeaInput
             {
                 var AIresponse = await _aiConn.GetAIResponseAsync(fullPrompt);
                 // Aqui você poderia salvar o resultado em outro banco ou log
-                Console.WriteLine(AIresponse);
+                //Console.WriteLine(AIresponse);
             }
             catch (Exception ex)
             {
@@ -74,6 +74,7 @@ public class IdeaInput : IIdeaInput
             }
         });        
 
+        Console.WriteLine("nao sei se funcionou");
         return response.Models != null && response.Models.Any();
     }
 

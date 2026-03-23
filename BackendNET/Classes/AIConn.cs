@@ -23,12 +23,12 @@ public class AIConn : GetAIResponseAsync
     {
         var requestBody = new
         {
-            model = "gpt-4o-mini",
+            model = "gpt-4o",
             messages = new[]
             {
                 new { role = "user", content = prompt }
             },
-            max_tokens = 1000
+            max_tokens = 2000
         };
 
         var json = JsonSerializer.Serialize(requestBody);

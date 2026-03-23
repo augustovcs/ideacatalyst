@@ -15,7 +15,7 @@ public class TreatPrompt
         // Substitui o placeholder pelo answer
         string fullPrompt = promptTemplate.Replace("{INSERIR_IDEA_AQUI}", answer);
 
-        Console.WriteLine(fullPrompt);
+        //Console.WriteLine(fullPrompt);
         return fullPrompt;
     }
 }
