@@ -76,8 +76,9 @@ public class IdeaInput : IIdeaInput
 
         Console.WriteLine("nao sei se funcionou");
         return response.Models != null && response.Models.Any();
+
+
+        
     }
-
-
 
 }
