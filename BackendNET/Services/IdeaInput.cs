@@ -3,6 +3,7 @@ using System;
 using System.Threading.Tasks;
 using Models;
 using DTOs;
+using Classes;
 using Interfaces;
 using Services;
 
@@ -14,10 +15,11 @@ public class IdeaInput : IIdeaInput
     string status_reference = "Active";
     
     private readonly Supabase.Client _supabaseClient;
-
-    public IdeaInput(Supabase.Client supabaseClient)
+    private readonly AIConn _aiConn;
+    public IdeaInput(Supabase.Client supabaseClient, AIConn aiConn)
     {
         _supabaseClient = supabaseClient;
+        _aiConn = aiConn;
     }
 
     public async Task<List<AnswersDTO>> GetIdeaByStatus(string status)
@@ -56,8 +58,21 @@ public class IdeaInput : IIdeaInput
             .Insert(newInput);
 
         var prompt = new TreatPrompt();
-        prompt.GeneratePrompt(input_answer.answer);
-        
+        var fullPrompt = prompt.GeneratePrompt(input_answer.answer);
+
+         _ = Task.Run(async () => 
+        {
+            try
+            {
+                var AIresponse = await _aiConn.GetAIResponseAsync(fullPrompt);
+                // Aqui você poderia salvar o resultado em outro banco ou log
+                Console.WriteLine(AIresponse);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro ao enviar prompt para AI: {ex.Message}");
+            }
+        });        
 
         return response.Models != null && response.Models.Any();
     }

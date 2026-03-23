@@ -3,6 +3,7 @@ using Microsoft.OpenApi;
 using TestingClasses;
 using Interfaces;
 using Services;
+using Classes;
 
 var AllowSpecificOrigins = "innertiaWeb";
 var builder = WebApplication.CreateBuilder(args);
@@ -51,7 +52,12 @@ builder.Services.AddControllers();
 //SERVICES SCOPE
 builder.Services.AddScoped<IIdeaInput, IdeaInput>();
 builder.Services.AddScoped<IGetOutput, GetOutput>();
-
+builder.Services.AddScoped<IGetOutput, GetOutput>();
+builder.Services.AddSingleton<AIConn>(sp => 
+{
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    return new AIConn(configuration);
+});
 
 var app = builder.Build();
 
