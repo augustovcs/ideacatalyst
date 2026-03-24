@@ -152,7 +152,7 @@ export function useIdeaAnalysis() {
       } catch (e) {
         console.log("Polling error:", e);
       }
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Esperar 1 segundo
+      await new Promise(resolve => setTimeout(resolve, 5000)); // Esperar 5 segundos
     }
     throw new Error("Análise não completou a tempo");
   }
