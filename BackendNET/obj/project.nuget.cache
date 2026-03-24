@@ -34,7 +34,7 @@
     {
       "code": "NU1510",
       "level": "Warning",
-      "message": "PackageReference Microsoft.Extensions.Configuration.Json will not be pruned. Consider removing this package from your dependencies, as it is likely unnecessary.",
+      "message": "PackageReference Microsoft.Extensions.Configuration.Json não será podado. Considere remover este pacote das dependências, pois\u00A0ele provavelmente é desnecessário.",
       "projectPath": "C:\\Users\\augus\\Documents\\CODE\\IdeaCatalyst\\BackendNET\\TrendAnalyzerAPI.csproj",
       "warningLevel": 1,
       "filePath": "C:\\Users\\augus\\Documents\\CODE\\IdeaCatalyst\\BackendNET\\TrendAnalyzerAPI.csproj",

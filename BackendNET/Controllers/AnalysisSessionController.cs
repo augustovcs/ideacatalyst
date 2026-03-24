@@ -25,17 +25,49 @@ public class InputTextController : ControllerBase
 
     }
 
+    [HttpGet("analysis/{sessionId}")]
+    public async Task<IActionResult> GetAnalysisResult(Guid sessionId)
+    {
+        var result = await _ideainput.GetAnalysisResultBySessionId(sessionId);
+        if (result == null)
+        {
+            return NotFound("Analysis result not found");
+        }
+
+        var dto = new AnalysisResultDTO
+        {
+            id = result.Id,
+            sessionId = result.SessionId,
+            score = result.Score,
+            fullAnalysis = result.FullAnalysis,
+            ideaTitle = result.IdeaTitle,
+            marketSize = result.MarketSize,
+            cagr = result.Cagr,
+            roi = result.Roi,
+            breakEvenMonths = result.BreakEvenMonths,
+            customerAcquisitionCost = result.CustomerAcquisitionCost,
+            lifetimeValue = result.LifetimeValue,
+            status = result.Status,
+            errorMessage = result.ErrorMessage,
+            createdAt = result.CreatedAt,
+            updatedAt = result.UpdatedAt
+        };
+
+        return Ok(dto);
+    }
+
 
     [HttpPost("idea")]
     public async Task<IActionResult> InputIdea ([FromBody] AnswersDTO idea)
     {
-        var answer_response =  await _ideainput.InputTextIdea(idea);
+        var sessionId =  await _ideainput.InputTextIdea(idea);
 
          // LOGS
         //Console.WriteLine($"Idea registered: {idea.answer}");
         return Ok(new
         {
             message = "Idea registered successfully",
+            sessionId,
             idea.answer,
             idea.status,
             idea.created_at

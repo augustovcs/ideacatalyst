@@ -8,6 +8,7 @@ For first time looking the project, keep maintain this arc model for Interfaces.
 
 
 using DTOs;
+using Models;
 
 namespace Interfaces;
 
@@ -15,6 +16,7 @@ public interface IIdeaInput
 {
 
     Task<List<AnswersDTO>> GetIdeaByStatus(string status);
-    Task<bool> InputTextIdea(AnswersDTO input_answer);
+    Task<Guid> InputTextIdea(AnswersDTO input_answer);
+    Task<AnalysisResult> GetAnalysisResultBySessionId(Guid sessionId);
 
 }

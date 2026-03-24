@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from 'react';
 
 export interface Demographic {
   ageRange: string;
@@ -15,6 +15,11 @@ export interface ExecutiveSummary {
   strategicFit: string;
 }
 
+export interface SubMarket {
+  name: string;
+  percentage: number;
+}
+
 export interface MarketSize {
   current: string;
   projected5Years: string;
@@ -22,14 +27,9 @@ export interface MarketSize {
   subMarkets: SubMarket[];
 }
 
-export interface SubMarket {
-  name: string;
-  percentage: number;
-}
-
 export interface Trend {
   trend: string;
-  impact: "high" | "medium" | "low";
+  impact: 'high' | 'medium' | 'low';
   dataPoint: string;
   reference: string;
 }
@@ -47,8 +47,13 @@ export interface NewsArticle {
   title: string;
   date: string;
   source: string;
-  relevance: "high" | "medium" | "low";
+  relevance: 'high' | 'medium' | 'low';
   url: string;
+}
+
+export interface BarrierToEntry {
+  barrier: string;
+  impactLevel: 'high' | 'medium' | 'low';
 }
 
 export interface MarketAnalysis {
@@ -59,24 +64,11 @@ export interface MarketAnalysis {
   barriersToEntry: BarrierToEntry[];
 }
 
-export interface BarrierToEntry {
-  barrier: string;
-  impactLevel: "high" | "medium" | "low";
-}
-
 export interface SWOTAnalysis {
   strengths: string[];
   weaknesses: string[];
   opportunities: string[];
   threats: string[];
-}
-
-export interface TechnicalDetails {
-  technologiesRequired: Technology[];
-  complexity: "low" | "medium" | "high";
-  criticalProcesses: CriticalProcess[];
-  humanResources: HumanResource[];
-  operationalMetrics: OperationalMetric[];
 }
 
 export interface Technology {
@@ -86,7 +78,7 @@ export interface Technology {
 
 export interface CriticalProcess {
   process: string;
-  impact: "high" | "medium" | "low";
+  impact: 'high' | 'medium' | 'low';
   dependencies: string;
   reference: string;
 }
@@ -94,7 +86,7 @@ export interface CriticalProcess {
 export interface HumanResource {
   role: string;
   count: number;
-  skillLevel: "junior" | "mid" | "senior";
+  skillLevel: 'junior' | 'mid' | 'senior';
   reference: string;
 }
 
@@ -105,13 +97,12 @@ export interface OperationalMetric {
   reference: string;
 }
 
-export interface MarketingAndSales {
-  strategies: Strategy[];
-  channels: Channel[];
-  customerAcquisitionCost: number;
-  lifetimeValue: number;
-  salesForecast: SalesForecastPoint[];
-  conversionMetrics: ConversionMetric[];
+export interface TechnicalDetails {
+  technologiesRequired: Technology[];
+  complexity: 'low' | 'medium' | 'high';
+  criticalProcesses: CriticalProcess[];
+  humanResources: HumanResource[];
+  operationalMetrics: OperationalMetric[];
 }
 
 export interface Strategy {
@@ -136,25 +127,13 @@ export interface ConversionMetric {
   benchmark: number;
 }
 
-export interface Financials {
-  initialCosts: InitialCost[];
-  revenueModel: {
-    pricing: string;
-    recurring: string;
-    upsell: string;
-  };
-  profitMarginEstimate: number;
-  cashFlowProjection: CashFlowPoint[];
-  roi: number;
-  breakEvenPoint: {
-    months: number;
-    revenue: string;
-  };
-}
-
-export interface InitialCost {
-  category: string;
-  amount: number;
+export interface MarketingAndSales {
+  strategies: Strategy[];
+  channels: Channel[];
+  customerAcquisitionCost: number;
+  lifetimeValue: number;
+  salesForecast: SalesForecastPoint[];
+  conversionMetrics: ConversionMetric[];
 }
 
 export interface CashFlowPoint {
@@ -163,16 +142,19 @@ export interface CashFlowPoint {
   outflow: number;
 }
 
-export interface RisksAndMitigation {
-  keyRisks: KeyRisk[];
-  mitigationActions: MitigationAction[];
-  nextSteps: string[];
+export interface Financials {
+  initialCosts: { category: string; amount: number }[];
+  revenueModel: { pricing: string; recurring: string; upsell: string };
+  profitMarginEstimate: number;
+  cashFlowProjection: CashFlowPoint[];
+  roi: number;
+  breakEvenPoint: { months: number; revenue: string };
 }
 
 export interface KeyRisk {
   risk: string;
-  probability: "low" | "medium" | "high";
-  impact: "low" | "medium" | "high";
+  probability: 'low' | 'medium' | 'high';
+  impact: 'low' | 'medium' | 'high';
   reference: string;
 }
 
@@ -181,10 +163,10 @@ export interface MitigationAction {
   reference: string;
 }
 
-export interface AdditionalInsights {
-  partnershipOpportunities: PartnershipOpportunity[];
-  emergingTechnologies: EmergingTechnology[];
-  regulatoryConsiderations: RegulatoryConsideration[];
+export interface RisksAndMitigation {
+  keyRisks: KeyRisk[];
+  mitigationActions: MitigationAction[];
+  nextSteps: string[];
 }
 
 export interface PartnershipOpportunity {
@@ -203,6 +185,12 @@ export interface RegulatoryConsideration {
   reference: string;
 }
 
+export interface AdditionalInsights {
+  partnershipOpportunities: PartnershipOpportunity[];
+  emergingTechnologies: EmergingTechnology[];
+  regulatoryConsiderations: RegulatoryConsideration[];
+}
+
 export interface DetailedAnalysisResult {
   ideaTitle: string;
   executiveSummary: ExecutiveSummary;
@@ -215,314 +203,204 @@ export interface DetailedAnalysisResult {
   additionalInsights: AdditionalInsights;
 }
 
-function generateDetailedAnalysis(ideaDescription: string): DetailedAnalysisResult {
-  const title = ideaDescription.length > 60 ? ideaDescription.slice(0, 60) + "…" : ideaDescription;
+interface BackendAnalysisResult {
+  id: string;
+  sessionId: string;
+  score: number | null;
+  fullAnalysis: string;
+  ideaTitle: string | null;
+  marketSize: string | null;
+  cagr: number | null;
+  roi: number | null;
+  breakEvenMonths: number | null;
+  customerAcquisitionCost: number | null;
+  lifetimeValue: number | null;
+  status: string;
+  errorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const FirstIdea = 'Descreva sua ideia em poucas frases. O que ela resolve?';
+export type AnalysisPhase = 'intro' | 'firstIdea' | 'loading' | 'result';
+
+const API_BASE = 'http://localhost:5068/api/input';
+const SESSION_STORAGE_KEY = 'analysis_session';
+
+function mapBackendToDetailedAnalysis(backend: BackendAnalysisResult): DetailedAnalysisResult | null {
+  if (backend.status.toLowerCase() !== 'completed' || !backend.fullAnalysis) {
+    return null;
+  }
+
+  let aiData: any;
+  try {
+    aiData = JSON.parse(backend.fullAnalysis);
+  } catch (error) {
+    console.error('Falha no JSON do backend:', error);
+    return null;
+  }
+
+  const executiveData = aiData.executiveSummary || {};
+  const marketAnalysisData = aiData.marketAnalysis || {};
+  const swotData = aiData.swotAnalysis || {};
+  const technicalData = aiData.technicalDetails || { technologiesRequired: [], complexity: 'medium', criticalProcesses: [], humanResources: [], operationalMetrics: [] };
+  const marketingData = aiData.marketingAndSales || {};
+  const financialsData = aiData.financials || {};
+  const risksData = aiData.risksAndMitigation || {};
+  const additionalData = aiData.additionalInsights || {};
 
   return {
-    ideaTitle: title,
+    ideaTitle: backend.ideaTitle || aiData.ideaTitle || 'Ideia sem t�tulo',
     executiveSummary: {
-      description: `${ideaDescription} Esta solução foi elaborada para atender uma lacuna específica no mercado, oferecendo valor tangível e diferenciação clara.`,
-      valueProposition: "Redução de custos operacionais e aumento de eficiência em 40% em 12 meses",
-      targetCustomer: {
-        ageRange: "25-45 anos",
-        gender: "Todos",
-        incomeLevel: "Classe A e B",
-        location: "Centros urbanos principais",
-        psychographics: [
-          "Early adopters de tecnologia",
-          "Buscam otimização e eficiência",
-          "Conscientes sobre ROI",
-          "Preferem soluções integradas",
-        ],
-      },
-      strategicFit: "https://example.com/estrategia",
+      description: executiveData.description || aiData.description || 'Resumo n�o dispon�vel',
+      valueProposition: executiveData.valueProposition || 'Proposta de valor n�o dispon�vel',
+      targetCustomer: executiveData.targetCustomer || { ageRange: 'N/A', gender: 'N/A', incomeLevel: 'N/A', location: 'N/A', psychographics: [] },
+      strategicFit: executiveData.strategicFit || 'N/A',
     },
     marketAnalysis: {
       marketSize: {
-        current: "$12.5B",
-        projected5Years: "$42.3B",
-        cagr: 28.5,
-        subMarkets: [
-          { name: "Enterprise", percentage: 45 },
-          { name: "Mid-Market", percentage: 35 },
-          { name: "SMB", percentage: 20 },
-        ],
+        current: marketAnalysisData.marketSize?.current || backend.marketSize || 'N/A',
+        projected5Years: marketAnalysisData.marketSize?.projected5Years || 'N/A',
+        cagr: marketAnalysisData.marketSize?.cagr || backend.cagr || 0,
+        subMarkets: marketAnalysisData.marketSize?.subMarkets || [],
       },
-      trends: [
-        {
-          trend: "Aumento de adoção de IA em automação",
-          impact: "high",
-          dataPoint: "+156% year-over-year",
-          reference: "https://example.com/trend1",
-        },
-        {
-          trend: "Migração para cloud",
-          impact: "high",
-          dataPoint: "75% das empresas até 2025",
-          reference: "https://example.com/trend2",
-        },
-        {
-          trend: "Foco em sostenibilidade",
-          impact: "medium",
-          dataPoint: "Regulamentações em 30 países",
-          reference: "https://example.com/trend3",
-        },
-      ],
-      competition: [
-        {
-          name: "Competitor A",
-          marketShare: 35,
-          strengths: ["Presença global", "Marca estabelecida"],
-          weaknesses: ["UI/UX desatualizada", "Suporte lento"],
-          notes: "Lider de mercado com custos altos",
-          reference: "https://example.com/competitorA",
-        },
-        {
-          name: "Competitor B",
-          marketShare: 25,
-          strengths: ["Inovação rápida", "Preço competitivo"],
-          weaknesses: ["Falta de integração", "Documentação ruim"],
-          notes: "Startup em crescimento",
-          reference: "https://example.com/competitorB",
-        },
-      ],
-      recentNews: [
-        {
-          title: "Market Trends Show Growth in Q4",
-          date: "2025-01-15",
-          source: "TechNews",
-          relevance: "high",
-          url: "https://example.com/news1",
-        },
-        {
-          title: "New Regulations Announced",
-          date: "2025-01-10",
-          source: "RegulationBulletin",
-          relevance: "high",
-          url: "https://example.com/news2",
-        },
-      ],
-      barriersToEntry: [
-        { barrier: "Capital inicial alto", impactLevel: "high" },
-        { barrier: "Compliance regulatório", impactLevel: "high" },
-        { barrier: "Curva de aprendizado", impactLevel: "medium" },
-      ],
+      trends: marketAnalysisData.trends || [],
+      competition: marketAnalysisData.competition || [],
+      recentNews: marketAnalysisData.recentNews || [],
+      barriersToEntry: marketAnalysisData.barriersToEntry || [],
     },
     swotAnalysis: {
-      strengths: [
-        "Tecnologia proprietária diferenciada",
-        "Equipe com experiência de 15+ anos",
-        "Modelo de negócio validado",
-      ],
-      weaknesses: [
-        "Marca desconhecida no mercado",
-        "Recursos de marketing limitados",
-        "Dependência de fornecedores críticos",
-      ],
-      opportunities: [
-        "Expansão geográfica para 5 novos países",
-        "Parcerias estratégicas com líderes de mercado",
-        "Verticalização para nichos de alto valor",
-      ],
-      threats: [
-        "Entrada de gigantes de tech (Google, Amazon)",
-        "Mudanças em regulamentações",
-        "Ciclo econômico recessivo",
-      ],
+      strengths: swotData.strengths || [],
+      weaknesses: swotData.weaknesses || [],
+      opportunities: swotData.opportunities || [],
+      threats: swotData.threats || [],
     },
-    technicalDetails: {
-      technologiesRequired: [
-        { name: "AI/ML", icon: "🤖" },
-        { name: "Cloud (AWS)", icon: "☁️" },
-        { name: "React", icon: "⚛️" },
-        { name: "PostgreSQL", icon: "🗄️" },
-      ],
-      complexity: "high",
-      criticalProcesses: [
-        {
-          process: "Data Processing Pipeline",
-          impact: "high",
-          dependencies: "Google Cloud, RabbitMQ",
-          reference: "https://example.com/process1",
-        },
-        {
-          process: "User Authentication & Authorization",
-          impact: "high",
-          dependencies: "Auth0, OAuth2",
-          reference: "https://example.com/process2",
-        },
-      ],
-      humanResources: [
-        { role: "Senior Engineer", count: 3, skillLevel: "senior", reference: "Job posting" },
-        { role: "Mid-level Developer", count: 5, skillLevel: "mid", reference: "Job posting" },
-        { role: "Product Manager", count: 1, skillLevel: "senior", reference: "Job posting" },
-      ],
-      operationalMetrics: [
-        { kpi: "System Uptime", target: "99.99%", benchmark: "99.95%", reference: "SLA" },
-        { kpi: "Response Time", target: "<200ms", benchmark: "<500ms", reference: "Performance" },
-      ],
-    },
+    technicalDetails: technicalData,
     marketingAndSales: {
-      strategies: [
-        { text: "Content marketing e thought leadership", reference: "https://example.com/strategy1" },
-        { text: "Partnership com consultores", reference: "https://example.com/strategy2" },
-      ],
-      channels: [
-        { name: "LinkedIn", icon: "💼", url: "https://linkedin.com" },
-        { name: "Industry Conferences", icon: "🎤", url: "https://example.com" },
-        { name: "Direct Sales", icon: "🤝", url: "https://sales.example.com" },
-      ],
-      customerAcquisitionCost: 2500,
-      lifetimeValue: 125000,
-      salesForecast: [
-        { year: 1, revenue: 2000000 },
-        { year: 2, revenue: 8500000 },
-        { year: 3, revenue: 22000000 },
-      ],
-      conversionMetrics: [
-        { metric: "Website to Trial", target: 8, benchmark: 5 },
-        { metric: "Trial to Paid", target: 25, benchmark: 20 },
-        { metric: "Customer Retention", target: 95, benchmark: 90 },
-      ],
+      strategies: marketingData.strategies || [],
+      channels: marketingData.channels || [],
+      customerAcquisitionCost: marketingData.customerAcquisitionCost || backend.customerAcquisitionCost || 0,
+      lifetimeValue: marketingData.lifetimeValue || backend.lifetimeValue || 0,
+      salesForecast: marketingData.salesForecast || [],
+      conversionMetrics: marketingData.conversionMetrics || [],
     },
     financials: {
-      initialCosts: [
-        { category: "R&D", amount: 500000 },
-        { category: "Marketing & Sales", amount: 300000 },
-        { category: "Operations", amount: 200000 },
-        { category: "Compliance & Legal", amount: 100000 },
-      ],
-      revenueModel: {
-        pricing: "$99/mês (Pro) e $299/mês (Enterprise)",
-        recurring: "100% subscription baseado",
-        upsell: "Addons de analytics avançados e suporte premium",
-      },
-      profitMarginEstimate: 68,
-      cashFlowProjection: [
-        { month: 1, inflow: 0, outflow: 150000 },
-        { month: 6, inflow: 250000, outflow: 200000 },
-        { month: 12, inflow: 800000, outflow: 420000 },
-        { month: 24, inflow: 3500000, outflow: 1200000 },
-      ],
-      roi: 385,
-      breakEvenPoint: {
-        months: 18,
-        revenue: "$4.2M ARR",
-      },
+      initialCosts: financialsData.initialCosts || [],
+      revenueModel: financialsData.revenueModel || { pricing: 'N/A', recurring: 'N/A', upsell: 'N/A' },
+      profitMarginEstimate: financialsData.profitMarginEstimate || 0,
+      cashFlowProjection: financialsData.cashFlowProjection || [],
+      roi: financialsData.roi || backend.roi || 0,
+      breakEvenPoint: financialsData.breakEvenPoint || { months: backend.breakEvenMonths || 0, revenue: 'N/A' },
     },
     risksAndMitigation: {
-      keyRisks: [
-        {
-          risk: "Atraso na implementação de features críticas",
-          probability: "medium",
-          impact: "high",
-          reference: "https://example.com/risk1",
-        },
-        {
-          risk: "Churn de clientes acima de 5% ao mês",
-          probability: "medium",
-          impact: "high",
-          reference: "https://example.com/risk2",
-        },
-      ],
-      mitigationActions: [
-        { action: "Implementar programa de sucesso do cliente robusto", reference: "CSM Plan" },
-        { action: "Estabelecer roadmap de produto transparente", reference: "Product Roadmap" },
-        { action: "Criar fundo contingencial de 20% do orçamento", reference: "Finance Plan" },
-      ],
-      nextSteps: [
-        "✓ Validar MVP com 50 usuários beta",
-        "✓ Fechar investments de pré-seed",
-        "✓ Contratar VP de Vendas",
-        "✓ Estabelecer primeiros 5 clientes enterprise",
-      ],
+      keyRisks: risksData.keyRisks || [],
+      mitigationActions: risksData.mitigationActions || [],
+      nextSteps: risksData.nextSteps || [],
     },
     additionalInsights: {
-      partnershipOpportunities: [
-        {
-          partner: "Grande consultoria de gestão (McKinsey, BCG)",
-          reference: "https://example.com/partner1",
-        },
-        {
-          partner: "Provedor cloud líder (AWS, GCP)",
-          reference: "https://example.com/partner2",
-        },
-      ],
-      emergingTechnologies: [
-        {
-          technology: "Quantum Computing",
-          relevance: "Potencial para otimização de algoritmos em 3-5 anos",
-        },
-        {
-          technology: "Edge Computing",
-          relevance: "Redução de latência em processamento de dados",
-        },
-      ],
-      regulatoryConsiderations: [
-        {
-          regulation: "LGPD (Data Protection)",
-          impact: "High - Implementação obrigatória",
-          reference: "https://example.com/lgpd",
-        },
-        {
-          regulation: "SOC 2 Compliance",
-          impact: "High - Requisitado por clientes enterprise",
-          reference: "https://example.com/soc2",
-        },
-      ],
+      partnershipOpportunities: additionalData.partnershipOpportunities || [],
+      emergingTechnologies: additionalData.emergingTechnologies || [],
+      regulatoryConsiderations: additionalData.regulatoryConsiderations || [],
     },
   };
 }
 
-export type AnalysisPhase = "intro" | "firstIdea" | "loading" | "result";
+async function postIdea(ideaDescription: string): Promise<string> {
+  const sessionId = localStorage.getItem(SESSION_STORAGE_KEY) || crypto.randomUUID();
+  localStorage.setItem(SESSION_STORAGE_KEY, sessionId);
 
-export function useDetailedAnalysis() {
-  const [phase, setPhase] = useState<AnalysisPhase>("intro");
-  const [answers, setAnswers] = useState<string[]>([]);
-  const [result, setResult] = useState<DetailedAnalysisResult | null>(null);
+  const response = await fetch(`${API_BASE}/idea`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ answer: ideaDescription, status: 'Active', created_at: new Date().toISOString(), sessionId }),
+  });
 
-  async function sendToBackend(ideaDescription: string) {
-    try {
-      const response = await fetch("http://localhost:5068/api/input/idea", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          answer: ideaDescription,
-          status: "Active",
-          created_at: new Date().toISOString(),
-        }),
-      });
+  if (!response.ok) throw new Error('Erro ao salvar a ideia');
 
-      if (!response.ok) throw new Error("Erro ao salvar a ideia");
+  const data = await response.json();
+  return data.sessionId || sessionId;
+}
 
-      const data = await response.json();
-      console.log("Ideia enviada com sucesso:", data);
-    } catch (err) {
-      console.error("Erro ao enviar para backend:", err);
-    }
+async function fetchAnalysisResult(sessionId: string): Promise<BackendAnalysisResult | null> {
+  const response = await fetch(`${API_BASE}/analysis/${sessionId}`);
+
+  if (response.status === 404) {
+    // Análise ainda não registrada no backend (processamento em fila).
+    return null;
   }
 
-  const submitIdea = useCallback(
-    (ideaDescription: string) => {
-      setAnswers([ideaDescription]);
-      setPhase("loading");
+  if (!response.ok) {
+    throw new Error(`Erro ao buscar análise: ${response.status} ${response.statusText}`);
+  }
 
-      setTimeout(async () => {
-        const analysisData = generateDetailedAnalysis(ideaDescription);
-        setResult(analysisData);
-        setPhase("result");
-        await sendToBackend(ideaDescription);
-      }, 1500);
+  return response.json();
+}
+
+async function waitForAnalysis(sessionId: string, maxAttempts = 40): Promise<BackendAnalysisResult> {
+  for (let i = 0; i < maxAttempts; i++) {
+    const result = await fetchAnalysisResult(sessionId);
+    if (!result) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      continue;
+    }
+
+    if (result.status.toLowerCase() === 'completed') return result;
+    if (result.status.toLowerCase() === 'error') throw new Error('Análise retornou erro no backend');
+
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+  }
+
+  throw new Error('Timeout aguardando análise completar');
+}
+
+export function useDetailedAnalysis() {
+  const [phase, setPhase] = useState<AnalysisPhase>('intro');
+  const [result, setResult] = useState<DetailedAnalysisResult | null>(null);
+
+  useEffect(() => {
+    const savedSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (!savedSessionId || phase !== 'intro') return;
+
+    (async () => {
+      try {
+        const backendResult = await fetchAnalysisResult(savedSessionId);
+        if (!backendResult || backendResult.status.toLowerCase() !== 'completed') return;
+
+        const detailed = mapBackendToDetailedAnalysis(backendResult);
+        if (detailed) {
+          setResult(detailed);
+          setPhase('result');
+        }
+      } catch (error) {
+        console.error('Erro no refresh de análise:', error);
+      }
+    })();
+  }, [phase]);
+
+  const submitIdea = useCallback(
+    async (ideaDescription: string) => {
+      setPhase('loading');
+      try {
+        const sessionId = await postIdea(ideaDescription);
+        const backendResult = await waitForAnalysis(sessionId);
+        const detailed = mapBackendToDetailedAnalysis(backendResult);
+        if (!detailed) throw new Error('Dados insuficientes do backend');
+
+        setResult(detailed);
+        setPhase('result');
+      } catch (error) {
+        console.error('Erro no submitIdea:', error);
+        setPhase('intro');
+      }
     },
     []
   );
 
-  const start = useCallback(() => setPhase("firstIdea"), []);
-
+  const start = useCallback(() => setPhase('firstIdea'), []);
   const reset = useCallback(() => {
-    setPhase("intro");
-    setAnswers([]);
+    setPhase('intro');
     setResult(null);
+    localStorage.removeItem(SESSION_STORAGE_KEY);
   }, []);
 
   return {
