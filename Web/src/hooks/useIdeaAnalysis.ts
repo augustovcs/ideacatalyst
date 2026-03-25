@@ -29,6 +29,7 @@ interface BackendAnalysisResult {
   errorMessage: string | null;
   createdAt: string;
   updatedAt: string;
+  subMarket: string | null;
 }
 
 function mapBackendToFrontend(backend: BackendAnalysisResult): AnalysisResult | null {

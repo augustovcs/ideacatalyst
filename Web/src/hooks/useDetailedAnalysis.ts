@@ -336,7 +336,7 @@ async function fetchAnalysisResult(sessionId: string): Promise<BackendAnalysisRe
   return response.json();
 }
 
-async function waitForAnalysis(sessionId: string, maxAttempts = 40): Promise<BackendAnalysisResult> {
+async function waitForAnalysis(sessionId: string, maxAttempts = 200): Promise<BackendAnalysisResult> {
   for (let i = 0; i < maxAttempts; i++) {
     const result = await fetchAnalysisResult(sessionId);
     if (!result) {
