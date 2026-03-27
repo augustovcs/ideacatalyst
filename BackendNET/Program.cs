@@ -8,8 +8,9 @@ using Classes;
 var AllowSpecificOrigins = "innertiaWeb";
 var builder = WebApplication.CreateBuilder(args);
 
+// =========================
 // CORS
-
+// =========================
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: AllowSpecificOrigins, policy =>
@@ -17,11 +18,12 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:3000", "http://localhost:8080")
             .AllowAnyHeader()
             .AllowAnyMethod();
-            //.AllowCredentials();
     });
 });
 
+// =========================
 // Swagger
+// =========================
 builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -34,51 +36,72 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Supabase
-builder.Services.AddScoped<Supabase.Client>(_ =>
-    new Supabase.Client(
-        builder.Configuration["SupabaseUrl"] ?? throw new ArgumentNullException("SupabaseUrl is not configured"),
-        builder.Configuration["SupabaseKey"],
+// =========================
+// Supabase (CORRETO)
+// =========================
+builder.Services.AddScoped<Supabase.Client>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+
+    var client = new Supabase.Client(
+        config["SupabaseUrl"] ?? throw new ArgumentNullException("SupabaseUrl"),
+        config["SupabaseKey"] ?? throw new ArgumentNullException("SupabaseKey"),
         new SupabaseOptions
         {
             AutoRefreshToken = true,
             AutoConnectRealtime = true,
         }
-    )
-);
+    );
 
+    // 🔥 ESSENCIAL: inicializa no próprio ciclo do DI
+    client.InitializeAsync().Wait();
+
+    return client;
+});
+
+// =========================
+// Controllers
+// =========================
 builder.Services.AddControllers();
 
-//SERVICES SCOPE
+// =========================
+// Services
+// =========================
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IHistoryService, HistoryService>();
 builder.Services.AddScoped<IIdeaInput, IdeaInput>();
 builder.Services.AddScoped<IGetOutput, GetOutput>();
-builder.Services.AddScoped<IGetOutput, GetOutput>();
-builder.Services.AddSingleton<AIConn>(sp => 
+
+builder.Services.AddSingleton<AIConn>(sp =>
 {
     var configuration = sp.GetRequiredService<IConfiguration>();
     return new AIConn(configuration);
 });
 
+// =========================
+// BUILD
+// =========================
 var app = builder.Build();
 
-using var scope = app.Services.CreateScope();
-var supabaseClient = scope.ServiceProvider.GetRequiredService<Supabase.Client>();
-await supabaseClient.InitializeAsync();
+// ❌ REMOVIDO:
+// - CreateScope
+// - InitializeAsync manual
+// - TestInsert fora do fluxo
 
-// Teste
-var dbTestService = new TestingClasses.DatabaseTestService(supabaseClient);
-await dbTestService.TestInsertAsync();
-
-
+// =========================
+// Middleware
+// =========================
 app.UseRouting();
 app.UseCors(AllowSpecificOrigins);
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
+// =========================
 // Swagger UI
+// =========================
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -90,6 +113,8 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-//app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
+
 app.MapStaticAssets();
+
 await app.RunAsync();

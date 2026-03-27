@@ -1,8 +1,7 @@
 using Supabase;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
-using System.Text;
-using System.Security.Cryptography;
 using DTOs;
 using Interfaces;
 using Models;
@@ -18,7 +17,7 @@ public class AuthService : IAuthService
         _supabaseClient = supabaseClient;
     }
 
-   public async Task<(bool, Guid)> Login(LoginDTO loginUser)
+    public async Task<(bool, Guid)> Login(LoginDTO loginUser)
     {
         try
         {
@@ -28,109 +27,149 @@ public class AuthService : IAuthService
             );
 
             if (session?.User == null)
-            {
-                Console.WriteLine("Supabase login returned no user.");
-                return await FallbackLogin(loginUser);
-            }
+                return (false, Guid.Empty);
+
+            _supabaseClient.Auth.SetSession(session.AccessToken, session.RefreshToken);
 
             if (!Guid.TryParse(session.User.Id, out var userId))
+                return (false, Guid.Empty);
+
+            // 🔥 GARANTE QUE USUÁRIO EXISTE NA TABELA
+            var user = await GetUserById(userId);
+
+            if (user != null)
+                return (true, userId);
+
+            // 🔥 tenta por email
+            user = await GetUserByEmail(loginUser.Email);
+
+            if (user != null)
             {
-                Console.WriteLine($"Supabase login user ID inválido: {session.User.Id}");
-                return await FallbackLogin(loginUser);
+                // recria com ID correto
+                await _supabaseClient
+                    .From<Users>()
+                    .Where(u => u.Email == loginUser.Email)
+                    .Delete();
+
+                var fixedUser = new Users
+                {
+                    Id = userId,
+                    Email = loginUser.Email,
+                    Name = user.Name ?? loginUser.Email,
+                    PasswordHash = "SUPABASE_AUTH",
+
+                    IsAdmin = user.IsAdmin,
+                    ApiAccessEnabled = user.ApiAccessEnabled,
+                    IsActive = true,
+                    IsVerified = true,
+
+                    FailedLoginAttempts = user.FailedLoginAttempts,
+                    CreatedAt = user.CreatedAt,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                await _supabaseClient.From<Users>().Insert(fixedUser);
+
+                return (true, userId);
             }
 
-            Console.WriteLine($"Supabase login success, userId={userId}");
+            // 🔥 cria novo
+            var newUser = new Users
+            {
+                Id = userId,
+                Email = loginUser.Email,
+                Name = loginUser.Email,
+                PasswordHash = "SUPABASE_AUTH",
+
+                IsAdmin = 0,
+                ApiAccessEnabled = false,
+                IsActive = true,
+                IsVerified = true,
+
+                FailedLoginAttempts = 0,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            await _supabaseClient.From<Users>().Insert(newUser);
+
             return (true, userId);
         }
-        catch (Supabase.Gotrue.Exceptions.GotrueException gotrueEx)
-        {
-            Console.WriteLine($"Supabase login failed: {gotrueEx.Message}");
-            return await FallbackLogin(loginUser);
-        }
         catch (Exception ex)
-        {
-            Console.WriteLine($"Login error: {ex.Message}");
-            return await FallbackLogin(loginUser);
+        {   
+            Console.WriteLine($"[AuthService.Login] ERRO: {ex.Message}");
+            return (false, Guid.Empty);
         }
     }
 
-    private async Task<(bool, Guid)> FallbackLogin(LoginDTO loginUser)
+    public async Task<bool> RegisterUser(CreateUserDTO dto)
     {
         try
         {
-            var hashedPassword = ComputeSha256Hash(loginUser.Password);
+            var signUp = await _supabaseClient.Auth.SignUp(dto.Email, dto.Password);
 
-            var users = await _supabaseClient
-                .From<Users>()
-                .Where(u => u.Email == loginUser.Email)
-                .Get();
+            if (signUp?.User == null)
+                return false;
 
-            var user = users.Models.FirstOrDefault();
-            if (user != null && user.PasswordHash == hashedPassword)
+            if (!Guid.TryParse(signUp.User.Id, out var userId))
+                return false;
+
+            // remove duplicado se existir
+            var existing = await GetUserByEmail(dto.Email);
+            if (existing != null)
             {
-                return (true, user.Id);
+                await _supabaseClient
+                    .From<Users>()
+                    .Where(u => u.Email == dto.Email)
+                    .Delete();
             }
+
+            var newUser = new Users
+            {
+                Id = userId,
+                Name = dto.Name,
+                Email = dto.Email,
+                PasswordHash = "SUPABASE_AUTH",
+
+                IsAdmin = 0,
+                ApiAccessEnabled = false,
+                IsActive = true,
+                IsVerified = signUp.User.EmailConfirmedAt != null,
+
+                FailedLoginAttempts = 0,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            await _supabaseClient.From<Users>().Insert(newUser);
+
+            return true;
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Fallback login error: {ex.Message}");
-        }
-
-        return (false, Guid.Empty);
-    }
-
-    private static string ComputeSha256Hash(string rawData)
-    {
-        using var sha256 = SHA256.Create();
-        var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(rawData));
-        return Convert.ToHexString(bytes);
-    }
-
-    public async Task<(bool, Guid)> IsUserAuthenticatedWithId(LoginDTO loginUser)
-    {
-        // Método legado. Usa Login() para comportamento unificado.
-        return await Login(loginUser);
-    }
-
-    public async Task<bool> RegisterUser(CreateUserDTO userRegister)
-    {
-        // 1. Cria no Auth do Supabase
-        var signUp = await _supabaseClient.Auth.SignUp(
-            userRegister.Email,
-            userRegister.Password
-        );
-
-        if (signUp?.User == null)
             return false;
+        }
+    }
 
-        var authUser = signUp.User;
+    // 🔥 MÉTODOS CENTRALIZADOS
 
-        var user = new Users
-        {
-            Id = Guid.Parse(authUser.Id),
-
-            Name = userRegister.Name,
-            Email = userRegister.Email,
-
-            PasswordHash = ComputeSha256Hash(userRegister.Password),
-
-            IsAdmin = 0,
-            ApiAccessEnabled = false,
-
-            IsActive = true,
-            IsVerified = authUser.EmailConfirmedAt != null,
-
-            FailedLoginAttempts = 0,
-
-            CreatedAt = DateTime.UtcNow,
-            CreatedUpdatedAt = DateTime.UtcNow
-        };
-
-        // 3. Insere no banco
+    public async Task<Users?> GetUserById(Guid userId)
+    {
         var response = await _supabaseClient
             .From<Users>()
-            .Insert(user);
+            .Where(u => u.Id == userId)
+            .Get();
 
-        return response.Models.Count > 0;
+        return response.Models.FirstOrDefault();
+    }
+
+    public async Task<Users?> GetUserByEmail(string email)
+    {
+        var response = await _supabaseClient
+            .From<Users>()
+            .Where(u => u.Email == email)
+            .Get();
+
+        return response.Models.FirstOrDefault();
     }
 }

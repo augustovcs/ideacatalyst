@@ -1,10 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading.Tasks;
 using DTOs;
 using Interfaces;
-using System.IO.Compression;
-using Models;
-using Supabase;
 
 namespace Controllers;
 
@@ -13,19 +11,21 @@ namespace Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
-    private readonly Supabase.Client _supabaseClient;
 
-    public AuthController(IAuthService authService, Supabase.Client supabaseClient)
+    public AuthController(IAuthService authService)
     {
         _authService = authService;
-        _supabaseClient = supabaseClient;
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] CreateUserDTO dto)
     {
-        if (string.IsNullOrEmpty(dto.Name) || string.IsNullOrEmpty(dto.Email) || string.IsNullOrEmpty(dto.Password))
+        if (string.IsNullOrEmpty(dto.Name) ||
+            string.IsNullOrEmpty(dto.Email) ||
+            string.IsNullOrEmpty(dto.Password))
+        {
             return BadRequest(new { message = "Nome, email e senha são obrigatórios" });
+        }
 
         var result = await _authService.RegisterUser(dto);
 
@@ -36,56 +36,42 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginDTO dtoLogin)
+    public async Task<IActionResult> Login([FromBody] LoginDTO dto)
     {
-        if (dtoLogin == null || 
-            string.IsNullOrEmpty(dtoLogin.Email) || 
-            string.IsNullOrEmpty(dtoLogin.Password))
+        if (dto == null ||
+            string.IsNullOrEmpty(dto.Email) ||
+            string.IsNullOrEmpty(dto.Password))
         {
-            return BadRequest("Email e senha são obrigatórios");
+            return BadRequest(new { message = "Email e senha são obrigatórios" });
         }
 
-        (bool isAuthenticated, Guid userId) = await _authService.Login(dtoLogin);
+        var (isAuthenticated, userId) = await _authService.Login(dto);
 
         if (!isAuthenticated || userId == Guid.Empty)
-            return Unauthorized(new {
-                message = "Credenciais inválidas"
-            });
+            return Unauthorized(new { message = "Credenciais inválidas" });
 
-        // Busca dados do usuário com api_access_enabled
-        try
+        var user = await _authService.GetUserById(userId);
+
+        if (user == null)
+            return Unauthorized(new { message = "Usuário não encontrado" });
+
+        var userDto = new UserResponseDTO
         {
-            var users = await _supabaseClient
-                .From<Users>()
-                .Where(u => u.Id == userId)
-                .Get();
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email,
+            IsAdmin = user.IsAdmin == 1,
+            ApiAccessEnabled = user.ApiAccessEnabled,
+            IsActive = user.IsActive,
+            IsVerified = user.IsVerified,
+            CreatedAt = user.CreatedAt,
+            LastLoginAt = user.LastLoginAt
+        };
 
-            var userResponse = users.Models.FirstOrDefault();
-            Console.WriteLine($"UserId vindo do auth: {userId}");
-            Console.WriteLine($"Qtd users encontrados: {users.Models.Count}");
-
-            if (userResponse == null)
-                return Unauthorized(new { message = "Usuário não encontrado" });
-
-            var userDto = new UserResponseDTO
-            {
-                Id = userResponse.Id,
-                Name = userResponse.Name,
-                Email = userResponse.Email,
-                IsAdmin = userResponse.IsAdmin == 1,
-                ApiAccessEnabled = userResponse.ApiAccessEnabled,
-                IsActive = userResponse.IsActive,
-                IsVerified = userResponse.IsVerified,
-                CreatedAt = userResponse.CreatedAt,
-                LastLoginAt = userResponse.LastLoginAt
-            };
-
-            return Ok(new { user = userDto, message = "Login realizado com sucesso" });
-        }
-        catch (Exception ex)
+        return Ok(new
         {
-            Console.WriteLine($"Erro no login: {ex.Message} {ex.StackTrace}");
-            return StatusCode(500, new { error = $"Erro ao buscar dados do usuário: {ex.Message}" });
-        }
+            user = userDto,
+            message = "Login realizado com sucesso"
+        });
     }
 }

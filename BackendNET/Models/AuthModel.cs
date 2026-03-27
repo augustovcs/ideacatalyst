@@ -1,13 +1,10 @@
-using System;
 using Supabase.Postgrest.Attributes;
 using Supabase.Postgrest.Models;
-
-namespace Models;
 
 [Table("users")]
 public class Users : BaseModel
 {
-    [PrimaryKey("id", false)]
+    [PrimaryKey("id")]
     public Guid Id { get; set; }
 
     [Column("name")]
@@ -17,7 +14,7 @@ public class Users : BaseModel
     public string Email { get; set; }
 
     [Column("password_hash")]
-    public string PasswordHash { get; set; }
+    public string? PasswordHash { get; set; }
 
     [Column("is_admin")]
     public int IsAdmin { get; set; }
@@ -38,13 +35,13 @@ public class Users : BaseModel
     public DateTime? LastLoginAt { get; set; }
 
     [Column("last_login_ip")]
-    public string LastLoginIp { get; set; }
+    public string? LastLoginIp { get; set; }
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
 
     [Column("updated_at")]
-    public DateTime CreatedUpdatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
     [Column("deleted_at")]
     public DateTime? DeletedAt { get; set; }
