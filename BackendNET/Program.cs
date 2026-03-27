@@ -94,7 +94,7 @@ var app = builder.Build();
 app.UseRouting();
 app.UseCors(AllowSpecificOrigins);
 
-app.UseAuthentication();
+//app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
@@ -115,6 +115,6 @@ if (app.Environment.IsDevelopment())
 
 // app.UseHttpsRedirection();
 
-app.MapStaticAssets();
+//app.MapStaticAssets();
 
 await app.RunAsync();

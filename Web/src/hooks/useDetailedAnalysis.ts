@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useAuth } from './useAuth';
 
 export interface Demographic {
   ageRange: string;
@@ -332,21 +333,38 @@ function generateMockDetailedAnalysis(ideaDescription: string): DetailedAnalysis
   };
 }
 
-async function postIdea(ideaDescription: string): Promise<string> {
+async function postIdea(ideaDescription: string, userId: string): Promise<string> {
   const sessionId = localStorage.getItem(SESSION_STORAGE_KEY) || crypto.randomUUID();
   localStorage.setItem(SESSION_STORAGE_KEY, sessionId);
 
-  const response = await fetch(`${API_BASE}/idea`, {
+
+  const body = {
+    idea: ideaDescription,
+    userId: userId,
+    status: 'Active',
+    created_at: new Date().toISOString(),
+    
+  };
+
+  console.log("BODY SENDO ENVIADO:", body);
+  
+  const response = await fetch(`${API_BASE}/idea?userId=${userId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ answer: ideaDescription, status: 'Active', created_at: new Date().toISOString(), sessionId }),
+    body: JSON.stringify({ idea: ideaDescription, status: 'Active', created_at: new Date().toISOString()}),
+    
   });
+
+  
+  
 
   if (!response.ok) throw new Error('Erro ao salvar a ideia');
 
   const data = await response.json();
   return data.sessionId || sessionId;
 }
+
+
 
 async function fetchAnalysisResult(sessionId: string): Promise<BackendAnalysisResult | null> {
   const response = await fetch(`${API_BASE}/analysis/${sessionId}`);
@@ -381,6 +399,7 @@ async function waitForAnalysis(sessionId: string, maxAttempts = 200): Promise<Ba
 }
 
 export function useDetailedAnalysis() {
+  const { user } = useAuth();
   const [phase, setPhase] = useState<AnalysisPhase>('intro');
   const [result, setResult] = useState<DetailedAnalysisResult | null>(null);
 
@@ -411,8 +430,19 @@ export function useDetailedAnalysis() {
       saveToHistory?: (idea: string, result: string, sessionId: string, wasMock: boolean) => Promise<void>
     ) => {
       setPhase('loading');
+
+      if (!user?.apiAccessEnabled) {
+        //console.log('Usuário sem acesso à API, aplicando mock');
+        const fallback = generateMockDetailedAnalysis(ideaDescription);
+        setResult(fallback);
+        setPhase('result');
+        return;
+
+
+      }
+
       try {
-        const sessionId = await postIdea(ideaDescription);
+        const sessionId = await postIdea(ideaDescription, userId);
         const backendResult = await waitForAnalysis(sessionId);
         const detailed = mapBackendToDetailedAnalysis(backendResult);
         if (!detailed) throw new Error('Dados insuficientes do backend');
@@ -437,7 +467,7 @@ export function useDetailedAnalysis() {
         }
       }
     },
-    []
+    [user]
   );
 
   const setManualResult = useCallback((resultData: DetailedAnalysisResult) => {

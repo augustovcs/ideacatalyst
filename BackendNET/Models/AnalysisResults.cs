@@ -9,6 +9,9 @@ namespace Models
     {
         [PrimaryKey("id", false)]
         public Guid Id { get; set; } = Guid.NewGuid();
+        
+        [Column("user_id")]
+        public Guid? UserId { get; set; }
 
         [Column("session_id")]
         public Guid SessionId { get; set; }

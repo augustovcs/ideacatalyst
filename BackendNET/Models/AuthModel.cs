@@ -4,7 +4,7 @@ using Supabase.Postgrest.Models;
 [Table("users")]
 public class Users : BaseModel
 {
-    [PrimaryKey("id")]
+    [PrimaryKey("id", false)]
     public Guid Id { get; set; }
 
     [Column("name")]

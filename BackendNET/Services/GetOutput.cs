@@ -31,7 +31,7 @@ public class GetOutput : IGetOutput
 
         return new AnswersDTO
         {
-            answer = session.Idea
+            idea = session.Idea
         };
     }
 

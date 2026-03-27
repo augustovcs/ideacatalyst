@@ -1,4 +1,3 @@
-using Supabase;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,91 +16,53 @@ public class AuthService : IAuthService
         _supabaseClient = supabaseClient;
     }
 
+    // ================================
+    // LOGIN
+    // ================================
     public async Task<(bool, Guid)> Login(LoginDTO loginUser)
     {
         try
         {
-            var session = await _supabaseClient.Auth.SignIn(
-                loginUser.Email,
-                loginUser.Password
-            );
+            var session = await _supabaseClient.Auth.SignIn(loginUser.Email, loginUser.Password);
 
             if (session?.User == null)
+            {
+                Console.WriteLine("[Login] Supabase retornou sessão nula.");
                 return (false, Guid.Empty);
+            }
+
+            if (!Guid.TryParse(session.User.Id, out var userId))
+            {
+                Console.WriteLine("[Login] ID do Supabase inválido.");
+                return (false, Guid.Empty);
+            }
 
             _supabaseClient.Auth.SetSession(session.AccessToken, session.RefreshToken);
 
-            if (!Guid.TryParse(session.User.Id, out var userId))
-                return (false, Guid.Empty);
-
-            // 🔥 GARANTE QUE USUÁRIO EXISTE NA TABELA
             var user = await GetUserById(userId);
 
             if (user != null)
-                return (true, userId);
-
-            // 🔥 tenta por email
-            user = await GetUserByEmail(loginUser.Email);
-
-            if (user != null)
             {
-                // recria com ID correto
-                await _supabaseClient
-                    .From<Users>()
-                    .Where(u => u.Email == loginUser.Email)
-                    .Delete();
-
-                var fixedUser = new Users
-                {
-                    Id = userId,
-                    Email = loginUser.Email,
-                    Name = user.Name ?? loginUser.Email,
-                    PasswordHash = "SUPABASE_AUTH",
-
-                    IsAdmin = user.IsAdmin,
-                    ApiAccessEnabled = user.ApiAccessEnabled,
-                    IsActive = true,
-                    IsVerified = true,
-
-                    FailedLoginAttempts = user.FailedLoginAttempts,
-                    CreatedAt = user.CreatedAt,
-                    UpdatedAt = DateTime.UtcNow
-                };
-
-                await _supabaseClient.From<Users>().Insert(fixedUser);
-
+                await UpdateLastLogin(userId);
                 return (true, userId);
             }
 
-            // 🔥 cria novo
-            var newUser = new Users
-            {
-                Id = userId,
-                Email = loginUser.Email,
-                Name = loginUser.Email,
-                PasswordHash = "SUPABASE_AUTH",
-
-                IsAdmin = 0,
-                ApiAccessEnabled = false,
-                IsActive = true,
-                IsVerified = true,
-
-                FailedLoginAttempts = 0,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
-
-            await _supabaseClient.From<Users>().Insert(newUser);
+            // Usuário autenticado no Supabase mas não existe na public.users — cria
+            Console.WriteLine($"[Login] Usuário {userId} não encontrado na public.users — criando.");
+            await CreatePublicUser(userId, loginUser.Email, loginUser.Email);
 
             return (true, userId);
         }
         catch (Exception ex)
-        {   
-            Console.WriteLine($"[AuthService.Login] ERRO: {ex.Message}");
+        {
+            Console.WriteLine($"[Login] ERRO: {ex.Message}");
             return (false, Guid.Empty);
         }
     }
 
+    // ================================
+    // REGISTER
+    // ================================
     public async Task<bool> RegisterUser(CreateUserDTO dto)
     {
         try
@@ -109,67 +70,120 @@ public class AuthService : IAuthService
             var signUp = await _supabaseClient.Auth.SignUp(dto.Email, dto.Password);
 
             if (signUp?.User == null)
+            {
+                Console.WriteLine("[Register] Supabase retornou usuário nulo.");
                 return false;
+            }
 
             if (!Guid.TryParse(signUp.User.Id, out var userId))
-                return false;
-
-            // remove duplicado se existir
-            var existing = await GetUserByEmail(dto.Email);
-            if (existing != null)
             {
+                Console.WriteLine("[Register] ID do Supabase inválido.");
+                return false;
+            }
+
+            // Se já existe na public.users com ID errado, remove
+            var existing = await GetUserByEmail(dto.Email);
+            if (existing != null && existing.Id != userId)
+            {
+                Console.WriteLine($"[Register] Removendo registro duplicado com ID errado: {existing.Id}");
                 await _supabaseClient
                     .From<Users>()
                     .Where(u => u.Email == dto.Email)
                     .Delete();
+                existing = null;
             }
 
-            var newUser = new Users
-            {
-                Id = userId,
-                Name = dto.Name,
-                Email = dto.Email,
-                PasswordHash = "SUPABASE_AUTH",
-
-                IsAdmin = 0,
-                ApiAccessEnabled = false,
-                IsActive = true,
-                IsVerified = signUp.User.EmailConfirmedAt != null,
-
-                FailedLoginAttempts = 0,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
-
-            await _supabaseClient.From<Users>().Insert(newUser);
+            if (existing == null)
+                await CreatePublicUser(userId, dto.Email, dto.Name);
 
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine($"[Register] ERRO: {ex.Message}");
             return false;
         }
     }
 
-    // 🔥 MÉTODOS CENTRALIZADOS
-
+    // ================================
+    // QUERIES
+    // ================================
     public async Task<Users?> GetUserById(Guid userId)
     {
-        var response = await _supabaseClient
-            .From<Users>()
-            .Where(u => u.Id == userId)
-            .Get();
+        try
+        {
+            var response = await _supabaseClient
+                .From<Users>()
+                .Where(u => u.Id == userId)
+                .Get();
 
-        return response.Models.FirstOrDefault();
+            return response.Models.FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[GetUserById] ERRO: {ex.Message}");
+            return null;
+        }
     }
 
     public async Task<Users?> GetUserByEmail(string email)
     {
-        var response = await _supabaseClient
-            .From<Users>()
-            .Where(u => u.Email == email)
-            .Get();
+        try
+        {
+            var response = await _supabaseClient
+                .From<Users>()
+                .Where(u => u.Email == email)
+                .Get();
 
-        return response.Models.FirstOrDefault();
+            return response.Models.FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[GetUserByEmail] ERRO: {ex.Message}");
+            return null;
+        }
+    }
+
+    // ================================
+    // HELPERS PRIVADOS
+    // ================================
+    private async Task CreatePublicUser(Guid userId, string email, string name)
+    {
+        var newUser = new Users
+        {
+            Id = userId,
+            Name = name,
+            Email = email,
+            PasswordHash = "SUPABASE_AUTH",
+            IsAdmin = 0,
+            ApiAccessEnabled = false,
+            IsActive = true,
+            IsVerified = true,
+            FailedLoginAttempts = 0,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        await _supabaseClient
+        .From<Users>()
+        .Upsert(newUser);
+        Console.WriteLine($"[CreatePublicUser] Usuário criado: {userId} / {email}");
+    }
+
+    private async Task UpdateLastLogin(Guid userId)
+    {
+        try
+        {
+            await _supabaseClient
+                .From<Users>()
+                .Where(u => u.Id == userId)
+                .Set(u => u.LastLoginAt, DateTime.UtcNow)
+                .Set(u => u.UpdatedAt, DateTime.UtcNow)
+                .Update();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[UpdateLastLogin] ERRO: {ex.Message}");
+        }
     }
 }

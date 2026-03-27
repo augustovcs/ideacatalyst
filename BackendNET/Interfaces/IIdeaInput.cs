@@ -14,9 +14,7 @@ namespace Interfaces;
 
 public interface IIdeaInput
 {
-
     Task<List<AnswersDTO>> GetIdeaByStatus(string status);
-    Task<Guid> InputTextIdea(AnswersDTO input_answer);
     Task<AnalysisResult> GetAnalysisResultBySessionId(Guid sessionId);
-
+    Task<Guid> InputTextIdea(AnswersDTO input_answer, Guid userId); // ← userId adicionado
 }

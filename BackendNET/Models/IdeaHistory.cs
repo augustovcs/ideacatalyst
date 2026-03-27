@@ -20,7 +20,7 @@ public class IdeaHistory : BaseModel
     public string AnalysisResult { get; set; }
 
     [Column("session_id")]
-    public string SessionId { get; set; }
+    public Guid? SessionId { get; set; }
 
     [Column("was_mock")]
     public bool WasMock { get; set; }

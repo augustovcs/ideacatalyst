@@ -57,22 +57,27 @@ public class InputTextController : ControllerBase
     }
 
 
-    [HttpPost("idea")]
-    public async Task<IActionResult> InputIdea ([FromBody] AnswersDTO idea)
+   [HttpPost("idea")]
+    public async Task<IActionResult> InputIdea([FromBody] AnswersDTO idea, [FromQuery] Guid userId)
     {
-        var sessionId =  await _ideainput.InputTextIdea(idea);
+        if (userId == Guid.Empty)
+            return BadRequest(new { message = "userId é obrigatório" });
 
-         // LOGS
-        //Console.WriteLine($"Idea registered: {idea.answer}");
+        var sessionId = await _ideainput.InputTextIdea(idea, userId);
+
+
+          if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState); // 🔥 ISSO AQUI
+        }
         return Ok(new
         {
             message = "Idea registered successfully",
             sessionId,
-            idea.answer,
+            idea.idea,
             idea.status,
             idea.created_at
         });
-
     }
 
 

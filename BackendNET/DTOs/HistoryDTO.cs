@@ -8,7 +8,7 @@ public class HistoryItemDTO
 
     public string AnalysisResult { get; set; }
 
-    public string SessionId { get; set; }
+    public Guid? SessionId { get; set; }
 
     public bool WasMock { get; set; }
 

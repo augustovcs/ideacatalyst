@@ -1,6 +1,6 @@
 using Supabase;
-using Supabase.Postgrest;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using DTOs;
 using Interfaces;
@@ -22,12 +22,12 @@ public class HistoryService : IHistoryService
         try
         {
             var response = await _supabaseClient
-                .From<IdeaHistory>()
-                .Where(h => h.UserId == userId)
+                .From<AnalysisResult>()
+                .Where(r => r.UserId == userId)
                 .Order("created_at", Supabase.Postgrest.Constants.Ordering.Descending)
                 .Get();
 
-            return response.Models.ConvertAll(m => MapToDTO(m));
+            return response.Models.Select(MapToDTO).ToList();
         }
         catch (Exception ex)
         {
@@ -41,8 +41,8 @@ public class HistoryService : IHistoryService
         try
         {
             var response = await _supabaseClient
-                .From<IdeaHistory>()
-                .Where(h => h.Id == itemId && h.UserId == userId)
+                .From<AnalysisResult>()
+                .Where(r => r.Id == itemId && r.UserId == userId)
                 .Get();
 
             var item = response.Models.FirstOrDefault();
@@ -50,37 +50,8 @@ public class HistoryService : IHistoryService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erro ao buscar item de histórico: {ex.Message}");
+            Console.WriteLine($"Erro ao buscar item: {ex.Message}");
             return null;
-        }
-    }
-
-    public async Task<bool> CreateHistoryItem(Guid userId, CreateHistoryItemDTO dto)
-    {
-        try
-        {
-            var item = new IdeaHistory
-            {
-                Id = Guid.NewGuid(),
-                UserId = userId,
-                IdeaDescription = dto.IdeaDescription,
-                AnalysisResult = dto.AnalysisResult,
-                SessionId = dto.SessionId,
-                WasMock = dto.WasMock,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
-
-            var response = await _supabaseClient
-                .From<IdeaHistory>()
-                .Insert(item);
-
-            return response.Models.Count > 0;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Erro ao criar item de histórico: {ex.Message}");
-            return false;
         }
     }
 
@@ -89,29 +60,30 @@ public class HistoryService : IHistoryService
         try
         {
             await _supabaseClient
-                .From<IdeaHistory>()
-                .Where(h => h.Id == itemId && h.UserId == userId)
+                .From<AnalysisResult>()
+                .Where(r => r.Id == itemId && r.UserId == userId)
                 .Delete();
 
             return true;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erro ao deletar item de histórico: {ex.Message}");
+            Console.WriteLine($"Erro ao deletar: {ex.Message}");
             return false;
         }
     }
 
-    private HistoryItemDTO MapToDTO(IdeaHistory model)
+    // CreateHistoryItem não é mais necessário — o IdeaInput já insere direto em analysis_results
+    public Task<bool> CreateHistoryItem(Guid userId, CreateHistoryItemDTO dto) 
+        => Task.FromResult(true);
+
+    private HistoryItemDTO MapToDTO(AnalysisResult r) => new()
     {
-        return new HistoryItemDTO
-        {
-            Id = model.Id,
-            IdeaDescription = model.IdeaDescription,
-            AnalysisResult = model.AnalysisResult,
-            SessionId = model.SessionId,
-            WasMock = model.WasMock,
-            CreatedAt = model.CreatedAt
-        };
-    }
+        Id = r.Id,
+        IdeaDescription = r.IdeaTitle ?? "",
+        AnalysisResult = r.FullAnalysis,
+        SessionId = r.SessionId,
+        WasMock = false,
+        CreatedAt = r.CreatedAt
+    };
 }
