@@ -107,27 +107,21 @@ function mapBackendToFrontend(backend: BackendAnalysisResult): AnalysisResult | 
   };
 }
 
-  const risks = [
-    breakEvenMonths > 12 ? `Break-even em ${breakEvenMonths} meses - longo prazo` : "Break-even acessível",
-    "Validação com usuários reais é essencial",
-  ];
-
-  const nextSteps = [
-    "Criar um MVP com as funcionalidades essenciais",
-    "Entrevistar potenciais usuários para validar a dor",
-    "Mapear canais de aquisição de clientes",
-    "Definir métricas de sucesso",
-  ];
-
-  const summary = `Análise completa da ideia "${title}". Dados extraídos da IA incluem mercado de ${marketSize}, CAGR de ${cagr}%, ROI de ${roi}%, break-even em ${breakEvenMonths} meses, CAC de R$ ${customerAcquisitionCost} e LTV de R$ ${lifetimeValue}.`;
+function generateMockAnalysis(ideaDescription: string): AnalysisResult {
+  const title = ideaDescription ? ideaDescription.split(/[.?!]/)[0].slice(0, 70) : 'Ideia de fallback';
 
   return {
-    ideaTitle: title,
-    scores,
-    strengths,
-    risks,
-    nextSteps,
-    summary,
+    ideaTitle: title || 'Ideia sem título',
+    scores: [
+      { label: 'ROI', value: 40, emoji: '💰' },
+      { label: 'CAGR', value: 18, emoji: '📈' },
+      { label: 'Break-even', value: 45, emoji: '⏱️' },
+      { label: 'CAC', value: 30, emoji: '💸' },
+    ],
+    strengths: ['Mercado em expansão', 'Proposta de valor clara', 'Alto potencial de escalabilidade'],
+    risks: ['Validação de usuário necessária', 'Dependência de aquisição de clientes', 'Concorrência direta em nicho'],
+    nextSteps: ['Prototipar MVP', 'Testar preço', 'Obter feedback de early adopters'],
+    summary: `Análise mock para ${title}. Resultados estimados com base em heurísticas.`,
   };
 }
 
@@ -200,8 +194,10 @@ export function useIdeaAnalysis() {
           setPhase("firstIdea");
         }
       } catch (err) {
-        console.error(err);
-        setPhase("firstIdea"); // voltar ou mostrar erro
+        console.error('Erro no submitAnswer, usando mock:', err);
+        const fallback = generateMockAnalysis(answer);
+        setResult(fallback);
+        setPhase("result");
       }
     },
     []

@@ -50,6 +50,8 @@ builder.Services.AddScoped<Supabase.Client>(_ =>
 builder.Services.AddControllers();
 
 //SERVICES SCOPE
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IHistoryService, HistoryService>();
 builder.Services.AddScoped<IIdeaInput, IdeaInput>();
 builder.Services.AddScoped<IGetOutput, GetOutput>();
 builder.Services.AddScoped<IGetOutput, GetOutput>();

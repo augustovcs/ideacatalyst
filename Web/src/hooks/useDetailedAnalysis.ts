@@ -305,6 +305,33 @@ function mapBackendToDetailedAnalysis(backend: BackendAnalysisResult): DetailedA
   };
 }
 
+function generateMockDetailedAnalysis(ideaDescription: string): DetailedAnalysisResult {
+  const title = ideaDescription ? ideaDescription.split(/\.\?|\.|!/)[0].slice(0, 70) : 'Ideia de fallback';
+
+  return {
+    ideaTitle: title || 'Ideia sem título',
+    executiveSummary: {
+      description: `Análise baseada em dados simulados para a ideia: ${ideaDescription}`,
+      valueProposition: 'Solução inovadora com foco em eficiência e experiência do usuário.',
+      targetCustomer: { ageRange: '25-45', gender: 'Todos', incomeLevel: 'R$5k+', location: 'Brasil', psychographics: ['Focado em tecnologia', 'Busca eficiência', 'Disposto a pagar por valor'] },
+      strategicFit: 'Alta aderência ao mercado atual de transformação digital.',
+    },
+    marketAnalysis: {
+      marketSize: { current: 'R$ 2.5B', projected5Years: 'R$ 4.0B', cagr: 14.3, subMarkets: [{ name: 'SaaS corporativo', percentage: 42 }, { name: 'Automação', percentage: 29 }] },
+      trends: [{ trend: 'Adoção de automação', impact: 'high', dataPoint: '70% de empresas planejam investir', reference: 'Relatório 2025' }],
+      competition: [{ name: 'Concorrente A', marketShare: 0.25, strengths: ['Escala', 'Preço'], weaknesses: ['Baixa personalização'], notes: 'Atenção ao nicho', reference: 'Benchmark interno' }],
+      recentNews: [{ title: 'Investimento em IA cresce', date: '2025-06-14', source: 'Tech News', relevance: 'high', url: 'https://example.com' }],
+      barriersToEntry: [{ barrier: 'Regulação', impactLevel: 'medium', reference: 'Agência reguladora' }],
+    },
+    swotAnalysis: { strengths: ['Proposta de valor clara', 'Mercado em crescimento'], weaknesses: ['Dependência inicial de recursos técnicos'], opportunities: ['Integração com parceiros estratégicos'], threats: ['Concorrência de players consolidados'] },
+    technicalDetails: { technologiesRequired: [{ name: 'React', icon: '⚛️' }, { name: 'Node.js', icon: '🟢' }], complexity: 'medium', criticalProcesses: [{ process: 'Validação de MVP', impact: 'high', dependencies: 'Equipe de produto', reference: 'Roadmap' }], humanResources: [{ role: 'Fullstack', count: 2, skillLevel: 'senior', reference: 'Recrutamento' }], operationalMetrics: [{ kpi: 'CAC', target: 'R$ 350', benchmark: 'R$ 450', reference: 'Análise de mercado' }] },
+    marketingAndSales: { strategies: [{ text: 'Campanha digital segmentada', reference: 'Plano marketing' }], channels: [{ name: 'LinkedIn', icon: '🔗', url: 'https://linkedin.com' }], customerAcquisitionCost: 400, lifetimeValue: 2300, salesForecast: [{ year: 2025, revenue: 520000 }], conversionMetrics: [{ metric: 'Lead-to-customer', target: 4, benchmark: 2.2 }] },
+    financials: { initialCosts: [{ category: 'Desenvolvimento', amount: 180000 }], revenueModel: { pricing: 'Assinatura', recurring: 'Sim', upsell: 'Suporte premium' }, profitMarginEstimate: 29, cashFlowProjection: [{ month: 1, inflow: 0, outflow: 35000 }], roi: 36, breakEvenPoint: { months: 14, revenue: 'R$ 420k' } },
+    risksAndMitigation: { keyRisks: [{ risk: 'Adoção lenta', probability: 'medium', impact: 'high', reference: 'Estudo' }], mitigationActions: [{ action: 'Piloto com early adopters', reference: 'Estratégia' }], nextSteps: ['Definir MVP', 'Validar com clientes'] },
+    additionalInsights: { partnershipOpportunities: [{ partner: 'Aceleradora X', reference: 'Contato' }], emergingTechnologies: [{ technology: 'IA conversacional', relevance: 'Alta' }], regulatoryConsiderations: [{ regulation: 'LGPD', impact: 'Médio', reference: 'Compliance' }] },
+  };
+}
+
 async function postIdea(ideaDescription: string): Promise<string> {
   const sessionId = localStorage.getItem(SESSION_STORAGE_KEY) || crypto.randomUUID();
   localStorage.setItem(SESSION_STORAGE_KEY, sessionId);
@@ -378,7 +405,11 @@ export function useDetailedAnalysis() {
   }, [phase]);
 
   const submitIdea = useCallback(
-    async (ideaDescription: string) => {
+    async (
+      ideaDescription: string,
+      userId: string = '',
+      saveToHistory?: (idea: string, result: string, sessionId: string, wasMock: boolean) => Promise<void>
+    ) => {
       setPhase('loading');
       try {
         const sessionId = await postIdea(ideaDescription);
@@ -388,13 +419,31 @@ export function useDetailedAnalysis() {
 
         setResult(detailed);
         setPhase('result');
+
+        // Salva no histórico se callback foi fornecido
+        if (saveToHistory && userId) {
+          await saveToHistory(ideaDescription, JSON.stringify(detailed), sessionId, false);
+        }
       } catch (error) {
-        console.error('Erro no submitIdea:', error);
-        setPhase('intro');
+        console.error('Erro no submitIdea, aplicando mock:', error);
+        const fallback = generateMockDetailedAnalysis(ideaDescription);
+        setResult(fallback);
+        setPhase('result');
+
+        // Salva mock no histórico também
+        if (saveToHistory && userId) {
+          const sessionId = crypto.randomUUID();
+          await saveToHistory(ideaDescription, JSON.stringify(fallback), sessionId, true);
+        }
       }
     },
     []
   );
+
+  const setManualResult = useCallback((resultData: DetailedAnalysisResult) => {
+    setResult(resultData);
+    setPhase('result');
+  }, []);
 
   const start = useCallback(() => setPhase('firstIdea'), []);
   const reset = useCallback(() => {
@@ -407,6 +456,7 @@ export function useDetailedAnalysis() {
     phase,
     result,
     submitIdea,
+    setManualResult,
     start,
     reset,
   };
