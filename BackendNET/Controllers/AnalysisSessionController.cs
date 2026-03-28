@@ -74,7 +74,7 @@ public class InputTextController : ControllerBase
         {
             message = "Idea registered successfully",
             sessionId,
-            idea.idea,
+            idea.answer,
             idea.status,
             idea.created_at
         });

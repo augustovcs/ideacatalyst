@@ -333,13 +333,13 @@ function generateMockDetailedAnalysis(ideaDescription: string): DetailedAnalysis
   };
 }
 
-async function postIdea(ideaDescription: string, userId: string): Promise<string> {
+async function postIdea(answer: string, userId: string): Promise<string> {
   const sessionId = localStorage.getItem(SESSION_STORAGE_KEY) || crypto.randomUUID();
   localStorage.setItem(SESSION_STORAGE_KEY, sessionId);
 
 
   const body = {
-    idea: ideaDescription,
+    answer: answer,
     userId: userId,
     status: 'Active',
     created_at: new Date().toISOString(),
@@ -351,7 +351,7 @@ async function postIdea(ideaDescription: string, userId: string): Promise<string
   const response = await fetch(`${API_BASE}/idea?userId=${userId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ idea: ideaDescription, status: 'Active', created_at: new Date().toISOString()}),
+    body: JSON.stringify({ answer: answer, status: 'Active', created_at: new Date().toISOString()}),
     
   });
 

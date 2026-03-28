@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "@/hooks/useTheme";
-import { useDetailedAnalysis } from "@/hooks/useDetailedAnalysis";
+import { useDetailedAnalysis, DetailedAnalysisResult } from "@/hooks/useDetailedAnalysis";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { IntroScreen } from "@/components/IntroScreen";
@@ -78,12 +78,25 @@ const Index = () => {
 
   const handleSelectHistoryItem = (item: HistoryItem) => {
     try {
-      const result = JSON.parse(item.analysisResult);
+      // analysisResult pode ser o JSON bruto da IA ou já um DetailedAnalysisResult serializado
+      const parsed = JSON.parse(item.analysisResult);
+      
+      // Se vier do backend direto (fullAnalysis da IA), precisa mapear
+      // Se vier já mapeado (salvo pelo saveToHistory), usa direto
+      const result: DetailedAnalysisResult = parsed.ideaTitle
+        ? parsed  // já é um DetailedAnalysisResult
+        : null;
+
+      if (!result) {
+        console.error("Formato de análise não reconhecido", parsed);
+        return;
+      }
+
       analysis.setManualResult(result);
       setSelectedHistoryItem(item);
       setActiveTab("generate");
-    } catch {
-      console.error("Erro ao carregar análise do histórico");
+    } catch (err) {
+      console.error("Erro ao carregar análise do histórico", err);
     }
   };
 

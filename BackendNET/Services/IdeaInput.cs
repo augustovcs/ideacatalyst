@@ -44,7 +44,7 @@ public class IdeaInput : IIdeaInput
         var session = new AnalysisSession
         {
             Id = Guid.NewGuid(),
-            Idea = input_answer.idea,
+            Idea = input_answer.answer,
             Status = _statusReference
         };
 
@@ -61,9 +61,9 @@ public class IdeaInput : IIdeaInput
             UserId = userId,
             Score = null,
             FullAnalysis = "",
-            IdeaTitle = input_answer.idea.Length > 100
-                ? input_answer.idea[..100] + "..."
-                : input_answer.idea,
+            IdeaTitle = input_answer.answer.Length > 100
+                ? input_answer.answer[..100] + "..."
+                : input_answer.answer,
             Status = "processing",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -77,7 +77,7 @@ public class IdeaInput : IIdeaInput
         Console.WriteLine($"✅ Analysis result inserted with ID: {savedAnalysisResult.Id}");
 
         var prompt = new TreatPrompt();
-        var fullPrompt = prompt.GeneratePrompt(input_answer.idea);
+        var fullPrompt = prompt.GeneratePrompt(input_answer.answer);
 
         _ = Task.Run(async () =>
         {
@@ -168,7 +168,7 @@ public class IdeaInput : IIdeaInput
                 // ================================
                 await _historyService.CreateHistoryItem(userId, new CreateHistoryItemDTO
                 {
-                    IdeaDescription = input_answer.idea,
+                    IdeaDescription = input_answer.answer,
                     AnalysisResult = aiResponse,
                     SessionId = savedSession.Id.ToString(),
                     WasMock = false
